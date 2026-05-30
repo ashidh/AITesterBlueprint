@@ -1,0 +1,117 @@
+﻿"Test Case ID","Module","API Name","Endpoint","HTTP Method","Test Scenario","Preconditions","Test Steps","Request Payload","Expected Status Code","Expected Response","Priority","Severity","Test Type","Automation Candidate","Remarks"
+"TS_AUTH_001","Authentication","CreateToken","/auth","POST","Verify token generation with valid credentials","API service is active","1. Send POST request to /auth
+2. Include header 'Content-Type: application/json'
+3. Provide payload: {""username"": ""admin"", ""password"": ""password123""}","{""username"": ""admin"", ""password"": ""password123""}","200 OK","{""token"": ""<token_string>""}","Critical","Blocker","Functional","Yes","Verifies the core entry token generation required for PUT/PATCH/DELETE."
+"TS_AUTH_002","Authentication","CreateToken","/auth","POST","Verify token generation fails with invalid username","API service is active","1. Send POST request to /auth
+2. Provide header 'Content-Type: application/json'
+3. Provide payload: {""username"": ""invalid_user"", ""password"": ""password123""}","{""username"": ""invalid_user"", ""password"": ""password123""}","200 OK","{""reason"": ""Bad credentials""}","High","Major","Negative","Yes","Restful Booker API historically returns 200 OK with 'Bad credentials' in the body instead of 401."
+"TS_AUTH_003","Authentication","CreateToken","/auth","POST","Verify token generation fails with invalid password","API service is active","1. Send POST request to /auth
+2. Provide header 'Content-Type: application/json'
+3. Provide payload: {""username"": ""admin"", ""password"": ""wrong_password""}","{""username"": ""admin"", ""password"": ""wrong_password""}","200 OK","{""reason"": ""Bad credentials""}","High","Major","Negative","Yes","Validates incorrect password security lock."
+"TS_AUTH_004","Authentication","CreateToken","/auth","POST","Verify authentication with missing mandatory field (username)","API service is active","1. Send POST request to /auth
+2. Provide header 'Content-Type: application/json'
+3. Provide payload: {""password"": ""password123""}","{""password"": ""password123""}","200 OK","{""reason"": ""Bad credentials""}","High","Major","Negative","Yes","Validates schema omission handling."
+"TS_AUTH_005","Authentication","CreateToken","/auth","POST","Verify authentication with empty request payload","API service is active","1. Send POST request to /auth
+2. Provide header 'Content-Type: application/json'
+3. Provide empty JSON payload: {}","{}","200 OK","{""reason"": ""Bad credentials""}","High","Major","Negative","Yes","Ensures empty bodies do not cause server crashes."
+"TS_AUTH_006","Authentication","CreateToken","/auth","POST","Verify security with SQL Injection payload in username","API service is active","1. Send POST request to /auth
+2. Provide payload: {""username"": ""admin' OR '1'='1"", ""password"": ""password123""}","{""username"": ""admin' OR '1'='1"", ""password"": ""password123""}","200 OK","{""reason"": ""Bad credentials""}","Critical","Critical","Security","Yes","Verifies protection against SQLi on login parameters."
+"TS_AUTH_007","Authentication","CreateToken","/auth","POST","Verify header validation - Unsupported Content-Type","API service is active","1. Send POST request to /auth
+2. Set header 'Content-Type: text/plain'
+3. Provide valid payload in plain text format","username=admin&password=password123","415 Unsupported Media Type or 400 Bad Request","Any error block or rejection string","Medium","Minor","Negative","Yes","Verifies the API rejects requests not formatted in application/json."
+"TS_PING_001","Ping","HealthCheck","/ping","GET","Verify server is up and responsive","API service is active","1. Send GET request to /ping
+2. Check response status and body","N/A (Empty)","201 Created","Created","High","Major","Smoke","Yes","Used as a health diagnostic check before test runs."
+"TS_PING_002","Ping","HealthCheck","/ping","POST","Verify health check rejects unsupported POST method","API service is active","1. Send POST request to /ping
+2. Verify the server response status","{}","405 Method Not Allowed","Method Not Allowed / Error string","Medium","Minor","Negative","Yes","Verifies HTTP method routing rules."
+"TS_BOOK_001","Booking","CreateBooking","/booking","POST","Verify successful booking creation with valid JSON payload","API service is active","1. Send POST request to /booking
+2. Include header 'Content-Type: application/json' and 'Accept: application/json'
+3. Provide valid booking JSON","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Breakfast""}","200 OK","{""bookingid"": <number>, ""booking"": {""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Breakfast""}}","Critical","Blocker","Functional","Yes","Core positive scenario for creating hotel bookings."
+"TS_BOOK_002","Booking","CreateBooking","/booking","POST","Verify successful booking creation with valid XML payload","API service is active","1. Send POST request to /booking
+2. Include header 'Content-Type: text/xml' and 'Accept: application/xml'
+3. Provide valid booking XML","<booking><firstname>Jim</firstname><lastname>Brown</lastname><totalprice>111</totalprice><depositpaid>true</depositpaid><bookingdates><checkin>2026-06-01</checkin><checkout>2026-06-10</checkout></bookingdates><additionalneeds>Breakfast</additionalneeds></booking>","200 OK","XML representation of created booking containing <bookingid> and fields matching request.","High","Major","Functional","Yes","Verifies the API supports multi-format serialization/deserialization (XML)."
+"TS_BOOK_003","Booking","CreateBooking","/booking","POST","Verify validation - Missing mandatory fields (firstname)","API service is active","1. Send POST request to /booking
+2. Provide payload missing the 'firstname' key
+3. Verify error response","{""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Breakfast""}","500 Internal Server Error / 400 Bad Request","Server error or Bad Request text","High","Major","Negative","Yes","Restful Booker historically returns 500 on missing fields due to internal serialization exceptions."
+"TS_BOOK_004","Booking","CreateBooking","/booking","POST","Verify data type validation - totalprice as string","API service is active","1. Send POST request to /booking
+2. Provide payload with 'totalprice' set as string: ""111""
+3. Verify response status","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": ""111"", ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Breakfast""}","400 Bad Request / 500 Internal Server Error","Error details","High","Major","Negative","Yes","Validates strict numerical validation."
+"TS_BOOK_005","Booking","CreateBooking","/booking","POST","Verify data validation - checkout date before checkin date","API service is active","1. Send POST request to /booking
+2. Provide payload with checkin = 2026-06-10 and checkout = 2026-06-01
+3. Verify validation rejection","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-10"", ""checkout"": ""2026-06-01""}, ""additionalneeds"": ""Breakfast""}","400 Bad Request","Error details","High","Major","Negative","Yes","Business logic validation: checkout must not precede checkin."
+"TS_BOOK_006","Booking","CreateBooking","/booking","POST","Verify boundary limit - totalprice set to 0","API service is active","1. Send POST request to /booking
+2. Provide payload with 'totalprice' set to 0
+3. Verify booking is allowed with zero price","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": 0, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Free Trial""}","200 OK","Successful creation containing totalprice: 0","Medium","Moderate","Boundary","Yes","Validates minimum boundary value of price."
+"TS_BOOK_007","Booking","CreateBooking","/booking","POST","Verify boundary limit - totalprice set to negative value (-1)","API service is active","1. Send POST request to /booking
+2. Provide payload with 'totalprice' set to -1
+3. Verify server rejects negative price","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": -1, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Discount""}","400 Bad Request","Error message","High","Major","Negative","Yes","Prevents booking with negative costs."
+"TS_BOOK_008","Booking","CreateBooking","/booking","POST","Verify edge case - Special characters and Unicode in guest name","API service is active","1. Send POST request to /booking
+2. Provide payload with firstname: ""Jöĥñ-Smïth #123"" and lastname: ""O'Conner""
+3. Verify correct storage and encoding","{""firstname"": ""Jöĥñ-Smïth #123"", ""lastname"": ""O'Conner"", ""totalprice"": 150, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""None""}","200 OK","Booking returned with unicode values preserved.","Medium","Moderate","Edge Case","Yes","Verifies character encoding standards (UTF-8) are supported."
+"TS_BOOK_009","Booking","CreateBooking","/booking","POST","Verify security case - XSS payload in additionalneeds","API service is active","1. Send POST request to /booking
+2. Provide payload with additionalneeds set to XSS script: ""<script>alert('xss')</script>""
+3. Verify that server sanitizes or escapes script tags","{""firstname"": ""John"", ""lastname"": ""Doe"", ""totalprice"": 200, ""depositpaid"": false, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""<script>alert('xss')</script>""}","200 OK","Response matches name inputs. If retrieved via GET, characters should be escaped.","High","Critical","Security","Yes","XSS prevention verification."
+"TS_GETIDS_001","Booking","GetBookingIds","/booking","GET","Verify retrieving all booking IDs successfully","API service is active and bookings exist","1. Send GET request to /booking
+2. Assert response status and array content","N/A (Empty)","200 OK","[{""bookingid"": 1}, {""bookingid"": 2}, ...]","High","Major","Smoke","Yes","Smoke test to ensure the database can list records."
+"TS_GETIDS_002","Booking","GetBookingIds","/booking","GET","Verify filtering booking IDs by firstname","API service is active; booking exists with firstname 'Sally'","1. Send GET request to /booking?firstname=Sally
+2. Assert that returned list only includes IDs matching that filter","N/A (Empty)","200 OK","Array of bookingids matching the name filter.","High","Major","Functional","Yes","Validates query string parameters for search."
+"TS_GETIDS_003","Booking","GetBookingIds","/booking","GET","Verify filtering booking IDs by lastname","API service is active; booking exists with lastname 'Brown'","1. Send GET request to /booking?lastname=Brown
+2. Assert returned list is filtered","N/A (Empty)","200 OK","Array of bookingids matching the lastname filter.","High","Major","Functional","Yes","Validates search capabilities by guest surname."
+"TS_GETIDS_004","Booking","GetBookingIds","/booking","GET","Verify filtering by both firstname and lastname","API service is active","1. Send GET request to /booking?firstname=Sally&lastname=Brown
+2. Verify response list matches both parameters","N/A (Empty)","200 OK","Array of bookingids filtered by both first and last name.","High","Major","Functional","Yes","Tests compound filter search logic."
+"TS_GETIDS_005","Booking","GetBookingIds","/booking","GET","Verify filtering booking IDs by checkin date","API service is active","1. Send GET request to /booking?checkin=2026-01-01
+2. Verify returned list returns booking IDs with checkin date greater than or equal to 2026-01-01","N/A (Empty)","200 OK","Array of bookingids matching date filters.","Medium","Moderate","Functional","Yes","Validates booking date filtering constraints."
+"TS_GETIDS_006","Booking","GetBookingIds","/booking","GET","Verify filter returns empty array when no bookings match criteria","API service is active","1. Send GET request to /booking?firstname=NonExistentGuestName123
+2. Verify the response is an empty JSON array","N/A (Empty)","200 OK","[]","Medium","Moderate","Boundary","Yes","Asserts boundary handling of empty search results."
+"TS_GETIDS_007","Booking","GetBookingIds","/booking","GET","Verify negative query parameter format - Invalid checkin date type","API service is active","1. Send GET request to /booking?checkin=not-a-date
+2. Verify API rejects invalid parameters","N/A (Empty)","400 Bad Request / 200 OK (empty list)","Rejection string or empty array depending on error tolerance","Medium","Minor","Negative","Yes","Verifies type checking on date query string params."
+"TS_GET_001","Booking","GetBooking","/booking/:id","GET","Verify retrieval of a single booking by valid ID","A booking exists with a known ID","1. Send GET request to /booking/<valid_id>
+2. Verify the JSON keys: firstname, lastname, totalprice, depositpaid, bookingdates (checkin, checkout), additionalneeds","N/A (Empty)","200 OK","{""firstname"": ""Jim"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2018-01-01"", ""checkout"": ""2019-01-01""}, ""additionalneeds"": ""Breakfast""}","Critical","Blocker","Functional","Yes","Verifies detailed view retrieve operation."
+"TS_GET_002","Booking","GetBooking","/booking/:id","GET","Verify fetching non-existent booking ID yields 404","API service is active","1. Send GET request to /booking/9999999 (or an ID known to not exist)
+2. Assert status code is 404","N/A (Empty)","404 Not Found","Not Found","High","Major","Negative","Yes","Verifies robust resource validation for invalid entities."
+"TS_GET_003","Booking","GetBooking","/booking/:id","GET","Verify fetching booking with alphanumeric ID parameter","API service is active","1. Send GET request to /booking/abc
+2. Verify response status is 404 Not Found","N/A (Empty)","404 Not Found","Not Found / Bad request error text","Medium","Minor","Negative","Yes","Verifies alphanumeric URL parameters are parsed correctly without crashing."
+"TS_PUT_001","Booking","UpdateBooking","/booking/:id","PUT","Verify updating booking with valid Cookie auth and JSON payload","A booking exists; valid auth token generated from /auth","1. Send PUT request to /booking/<id>
+2. Add header 'Content-Type: application/json' and 'Accept: application/json'
+3. Add header 'Cookie: token=<valid_token>'
+4. Provide updated full payload","{""firstname"": ""James"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Lunch""}","200 OK","{""firstname"": ""James"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Lunch""}","Critical","Blocker","Functional","Yes","Validates the full update path using token cookie auth."
+"TS_PUT_002","Booking","UpdateBooking","/booking/:id","PUT","Verify updating booking with Basic Auth","A booking exists","1. Send PUT request to /booking/<id>
+2. Set header 'Authorization: Basic YWRtaW46cGFzc3dvcmQxMjM='
+3. Provide complete body details","{""firstname"": ""James"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Lunch""}","200 OK","Updated object matching payload","High","Major","Functional","Yes","Tests alternative HTTP Basic Authentication path."
+"TS_PUT_003","Booking","UpdateBooking","/booking/:id","PUT","Verify update fails when authorization token is missing","A booking exists","1. Send PUT request to /booking/<id>
+2. Omit both 'Cookie' and 'Authorization' headers
+3. Provide complete body details","{""firstname"": ""James"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Lunch""}","403 Forbidden","Forbidden","Critical","Critical","Security","Yes","Critical authorization check: reject updates without tokens."
+"TS_PUT_004","Booking","UpdateBooking","/booking/:id","PUT","Verify update fails with invalid token","A booking exists","1. Send PUT request to /booking/<id>
+2. Provide header 'Cookie: token=invalidtoken123'
+3. Provide complete payload details","{""firstname"": ""James"", ""lastname"": ""Brown"", ""totalprice"": 111, ""depositpaid"": true, ""bookingdates"": {""checkin"": ""2026-06-01"", ""checkout"": ""2026-06-10""}, ""additionalneeds"": ""Lunch""}","403 Forbidden","Forbidden","Critical","Critical","Security","Yes","Validates security rejection of malformed/fake tokens."
+"TS_PUT_005","Booking","UpdateBooking","/booking/:id","PUT","Verify update fails with partial body payload (PUT constraint)","A booking exists; valid auth present","1. Send PUT request to /booking/<id> with valid Cookie
+2. Provide partial payload: {""firstname"": ""James""}
+3. Verify server rejects request since PUT requires full representation replacement","{""firstname"": ""James""}","400 Bad Request","Bad Request error text","High","Major","Negative","Yes","Asserts PUT standard protocol: incomplete payloads are rejected."
+"TS_PATCH_001","Booking","PartialUpdateBooking","/booking/:id","PATCH","Verify partial update of firstname only with valid cookie auth","A booking exists; valid token available","1. Send PATCH request to /booking/<id>
+2. Include header 'Cookie: token=<valid_token>'
+3. Provide body containing only 'firstname'","{""firstname"": ""James""}","200 OK","JSON containing the entire updated booking details with firstname updated to ""James"" and other fields unchanged.","Critical","Blocker","Functional","Yes","Validates PATCH capability: modifying subset of fields."
+"TS_PATCH_002","Booking","PartialUpdateBooking","/booking/:id","PATCH","Verify partial update of dates only","A booking exists; valid token available","1. Send PATCH request to /booking/<id>
+2. Provide body: {""bookingdates"": {""checkin"": ""2026-07-01"", ""checkout"": ""2026-07-15""}}","{""bookingdates"": {""checkin"": ""2026-07-01"", ""checkout"": ""2026-07-15""}}","200 OK","Entire booking returned with updated booking dates.","High","Major","Functional","Yes","Ensures sub-object merging behaves correctly in PATCH."
+"TS_PATCH_003","Booking","PartialUpdateBooking","/booking/:id","PATCH","Verify partial update fails without authentication","A booking exists","1. Send PATCH request to /booking/<id>
+2. Omit auth headers
+3. Provide payload: {""additionalneeds"": ""Breakfast""}","{""additionalneeds"": ""Breakfast""}","403 Forbidden","Forbidden","High","Critical","Security","Yes","Confirms PATCH requires proper auth gates."
+"TS_PATCH_004","Booking","PartialUpdateBooking","/booking/:id","PATCH","Verify partial update with empty JSON body","A booking exists; valid auth present","1. Send PATCH request to /booking/<id> with auth
+2. Provide empty body: {}
+3. Verify booking details remain unchanged","{}","200 OK","No fields modified; returns current state","Medium","Moderate","Boundary","Yes","Asserts fallback handling when zero properties are modified."
+"TS_DEL_001","Booking","DeleteBooking","/booking/:id","DELETE","Verify successful booking deletion with valid Cookie auth","A booking exists; valid token available","1. Send DELETE request to /booking/<id>
+2. Include header 'Cookie: token=<valid_token>'
+3. Verify response status","N/A (Empty)","201 Created","Created","Critical","Blocker","Functional","Yes","Core delete validation. Restful Booker API returns 201 Created on DELETE success."
+"TS_DEL_002","Booking","DeleteBooking","/booking/:id","DELETE","Verify delete fails without authentication","A booking exists","1. Send DELETE request to /booking/<id>
+2. Omit all authorization headers
+3. Verify failure code","N/A (Empty)","403 Forbidden","Forbidden","Critical","Critical","Security","Yes","Confirms that booking destruction requires authenticated headers."
+"TS_DEL_003","Booking","DeleteBooking","/booking/:id","DELETE","Verify delete returns 405/404 for non-existent booking ID","API service is active","1. Send DELETE request to /booking/9999999 (with valid token)
+2. Assert status code","N/A (Empty)","405 Method Not Allowed / 404 Not Found","Method Not Allowed / Not Found text","High","Major","Negative","Yes","Restful Booker returns 405 Method Not Allowed for deletes of non-existent entity IDs."
+"TS_WORK_001","Workflows","E2E CRUD Chain","/booking","Multiple","Verify complete CRUD lifecycle of a booking","Auth token available","1. Create Booking (POST /booking) -> save generated ID
+2. Retrieve Booking (GET /booking/:id) -> Verify name matches
+3. Update Booking (PUT /booking/:id) -> Modify totalprice
+4. Partial Update (PATCH /booking/:id) -> Modify additionalneeds
+5. Retrieve Booking again -> Assert both updates are correct
+6. Delete Booking (DELETE /booking/:id)
+7. Retrieve Booking -> Verify 404 is returned","Multiple requests chained","200, 200, 200, 200, 200, 201, 404","Lifecycle assertions match schema specs","Critical","Blocker","Integration","Yes","Enterprise E2E workflow validating database write, read, update, delete pipeline integrity."
+"TS_WORK_002","Workflows","E2E Search Chain","/booking","Multiple","Verify created booking is discoverable via queries","Unique name generated","1. Create booking with firstname: 'UniqueFirstnameXYZ' and lastname: 'Doe'
+2. Send query request (GET /booking?firstname=UniqueFirstnameXYZ&lastname=Doe)
+3. Verify the generated bookingid appears in list","Create payload + Query parameters","200, 200","Returned array contains booking ID","High","Major","Integration","Yes","Validates indexing integration between create and search layers."
